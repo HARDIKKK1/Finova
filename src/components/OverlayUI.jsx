@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, Play, Shield, Compass, Landmark, PieChart, Sparkles } from 'lucide-react';
 
-const OverlayUI = () => {
+const OverlayUI = ({ onLaunchApp }) => {
   return (
     <div className="ui-wrapper">
       {/* Navigation Bar */}
@@ -15,9 +15,9 @@ const OverlayUI = () => {
           <li><a href="#analytics">Analytics</a></li>
           <li><a href="#security">Security</a></li>
         </ul>
-        <a href="#launch" className="btn btn-secondary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
+        <button onClick={onLaunchApp} className="btn btn-secondary cursor-pointer" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
           Launch App
-        </a>
+        </button>
       </nav>
 
       {/* SECTION 1: HERO */}
@@ -32,7 +32,7 @@ const OverlayUI = () => {
             Track expenses, visualize spending patterns, and grow your savings with an intelligent, futuristic finance dashboard.
           </p>
           <div className="hero-actions">
-            <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button onClick={onLaunchApp} className="btn btn-primary cursor-pointer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               Start Tracking <ArrowRight size={18} />
             </button>
             <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -119,7 +119,7 @@ const OverlayUI = () => {
           <p style={{ color: '#9ca3af', lineHeight: '1.6', fontSize: '1.05rem', marginBottom: '2rem' }}>
             Your wealth is alive. Automated round-ups and interest compounding trigger growth nodes on your crystal tree. Watch your savings blossom as your financial discipline grows.
           </p>
-          <button className="btn btn-primary btn-primary-green" style={{
+          <button onClick={onLaunchApp} className="btn btn-primary btn-primary-green cursor-pointer" style={{
             background: 'linear-gradient(135deg, #00f5a0 0%, #00d2ff 100%)',
             boxShadow: '0 0 20px rgba(0, 245, 160, 0.3)',
             fontWeight: 800

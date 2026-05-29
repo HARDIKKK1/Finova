@@ -1,27 +1,37 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import FinanceCanvas from './components/FinanceCanvas';
 import OverlayUI from './components/OverlayUI';
+import LoginCanvas from './components/LoginCanvas';
+import LoginUI from './components/LoginUI';
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
 function App() {
+  // Simple state router: 'landing' | 'login'
+  const [currentView, setCurrentView] = useState('landing');
   const scrollProgressRef = useRef(0);
 
+  // States for the 3D Login Page interactions
+  const [isTyping, setIsTyping] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
   useEffect(() => {
-    // 1. Initialize Lenis Smooth Scrolling
+    if (currentView !== 'landing') return;
+
+    // 1. Initialize Lenis Smooth Scrolling (Only active on Landing Page)
     const lenis = new Lenis({
       duration: 1.4,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // smooth exponential deceleration
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       wheelMultiplier: 1.1,
       infinite: false,
     });
 
-    // Connect Lenis to requestAnimationFrame
     function raf(time) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -36,38 +46,68 @@ function App() {
     gsap.ticker.lagSmoothing(0);
 
     // 2. Set up GSAP ScrollTrigger to track scroll progress
-    // The landing page has 6 sections, mapping scroll from 0.0 to 5.0
     const trigger = ScrollTrigger.create({
       trigger: 'body',
       start: 'top top',
       end: 'bottom bottom',
       scrub: true,
       onUpdate: (self) => {
-        // self.progress ranges from 0 (top) to 1 (bottom)
-        // Map this to a 0-5 float representing our 3D sections
         scrollProgressRef.current = self.progress * 5;
       }
     });
 
-    // Cleanup on unmount
+    // Cleanup
     return () => {
       lenis.destroy();
       trigger.kill();
       gsap.ticker.remove(lenis.raf);
     };
-  }, []);
+  }, [currentView]);
+
+  const handleLoginSuccessComplete = () => {
+    // Reset login states
+    setIsTyping(false);
+    setIsSubmitting(false);
+    setIsSuccess(false);
+    // Transition back to main app dashboard (landing page)
+    setCurrentView('landing');
+  };
 
   return (
     <>
-      {/* 3D WebGL Canvas Layer */}
-      <FinanceCanvas scrollProgressRef={scrollProgressRef} />
+      {currentView === 'landing' ? (
+        <>
+          {/* Landing Page WebGL Layer */}
+          <FinanceCanvas scrollProgressRef={scrollProgressRef} />
 
-      {/* Aesthetic ambient glow orbs behind text panels */}
-      <div className="glow-orb glow-orb-purple" />
-      <div className="glow-orb glow-orb-blue" />
+          {/* Ambient glow decoration orbs */}
+          <div className="glow-orb glow-orb-purple" />
+          <div className="glow-orb glow-orb-blue" />
 
-      {/* HTML Interface Overlay Layer */}
-      <OverlayUI />
+          {/* HTML Landing UI Overlay */}
+          <OverlayUI onLaunchApp={() => setCurrentView('login')} />
+        </>
+      ) : (
+        <>
+          {/* Login Page WebGL Layer */}
+          <LoginCanvas
+            isTyping={isTyping}
+            isSubmitting={isSubmitting}
+            isSuccess={isSuccess}
+            onSuccessAnimComplete={handleLoginSuccessComplete}
+          />
+
+          {/* HTML Login UI Overlay */}
+          <LoginUI
+            setIsTyping={setIsTyping}
+            isSubmitting={isSubmitting}
+            setIsSubmitting={setIsSubmitting}
+            isSuccess={isSuccess}
+            setIsSuccess={setIsSuccess}
+            onBackToLanding={() => setCurrentView('landing')}
+          />
+        </>
+      )}
     </>
   );
 }
