@@ -5,7 +5,7 @@ import {
   BrainCircuit, ShieldAlert, BadgeAlert, Award, LogOut 
 } from 'lucide-react';
 
-const DashboardUI = ({ onSignOut }) => {
+const DashboardUI = ({ onSignOut, onNavigateTransactions }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   
   const notifications = [
@@ -30,12 +30,26 @@ const DashboardUI = ({ onSignOut }) => {
           <span className="text-[0.65rem] font-bold tracking-widest text-[#7b61ff] border border-[#7b61ff]/30 px-1.5 py-0.5 rounded ml-2 uppercase">Command Center</span>
         </div>
         
-        <ul className="nav-links hidden md:flex">
-          <li><a href="#hero">Overview</a></li>
-          <li><a href="#galaxy">Galaxy</a></li>
-          <li><a href="#timeline">Timeline</a></li>
-          <li><a href="#analytics">Analytics</a></li>
-          <li><a href="#insights">Insights</a></li>
+        <ul className="nav-links hidden md:flex items-center gap-6">
+          <li><a href="#hero" className="hover:text-white transition-colors">Overview</a></li>
+          <li><a href="#galaxy" className="hover:text-white transition-colors">Galaxy</a></li>
+          <li>
+            <button 
+              onClick={onNavigateTransactions} 
+              className="hover:text-white cursor-pointer transition-colors bg-transparent border-none text-[0.95rem] font-semibold text-[#9ca3af] p-0"
+            >
+              Transactions
+            </button>
+          </li>
+          <li>
+            <button 
+              onClick={onNavigateTransactions} 
+              className="hover:text-white cursor-pointer transition-colors bg-transparent border-none text-[0.95rem] font-semibold text-[#9ca3af] p-0"
+            >
+              Analytics
+            </button>
+          </li>
+          <li><a href="#insights" className="hover:text-white transition-colors">Insights</a></li>
         </ul>
 
         <div className="flex items-center gap-4">
