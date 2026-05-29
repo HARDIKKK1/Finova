@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Unlock, Mail, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 
 const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsSuccess, onBackToLanding }) => {
   const [isRegister, setIsRegister] = useState(false);
@@ -107,6 +107,23 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
     setPassword('');
     setConfirmPassword('');
     setError('');
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsSubmitting(true);
+    setError('');
+    try {
+      await signInWithPopup(auth, googleProvider);
+      setIsSubmitting(false);
+      setIsSuccess(true);
+    } catch (err) {
+      setIsSubmitting(false);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Login popup closed before completion.');
+      } else {
+        setError(err.message.replace('Firebase:', '').trim());
+      }
+    }
   };
 
   return (
@@ -316,6 +333,27 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
             )}
           </button>
         </form>
+
+        <div className="flex items-center my-4">
+          <div className="flex-1 h-[1px] bg-white/5" />
+          <span className="px-3 text-[10px] uppercase font-bold text-gray-500 tracking-widest">or</span>
+          <div className="flex-1 h-[1px] bg-white/5" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={isSubmitting || isSuccess}
+          className="w-full py-3 rounded-xl border border-white/8 hover:border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
+        >
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114A5.57 5.57 0 0 1 8.35 12.999a5.57 5.57 0 0 1 5.64-5.514 5.378 5.378 0 0 1 3.82 1.545l3.14-3.138A9.778 9.778 0 0 0 13.99 3c-5.523 0-10 4.477-10 10s4.477 10 10 10c5.787 0 9.61-4.068 9.61-9.78a8.887 8.887 0 0 0-.16-1.935H12.24z"
+            />
+          </svg>
+          Continue with Google
+        </button>
 
         {/* Secondary sign up / sign in toggle link */}
         <div className="mt-8 text-center border-t border-white/5 pt-6">
