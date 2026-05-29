@@ -1,0 +1,345 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@500;700;800&display=swap');
+
+:root {
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Syne', var(--font-sans);
+  
+  /* Color Palette - Cyber Fintech Cosmic Theme */
+  --bg-deep: #030308;
+  --bg-dark: #080812;
+  --bg-card: rgba(10, 10, 20, 0.45);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-glass-glow: rgba(0, 210, 255, 0.25);
+  
+  --primary: #00d2ff;       /* Electric Blue */
+  --primary-glow: rgba(0, 210, 255, 0.4);
+  --secondary: #00f5a0;     /* Emerald Green */
+  --secondary-glow: rgba(0, 245, 160, 0.4);
+  --accent: #bd00ff;        /* Neon Purple */
+  --accent-glow: rgba(189, 0, 255, 0.4);
+  --danger: #ff4b72;        /* Hot Coral */
+  
+  --text-white: #ffffff;
+  --text-light: #f3f4f6;
+  --text-gray: #9ca3af;
+  --text-dark: #4b5563;
+  
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --blur-amt: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  background-color: var(--bg-deep);
+  color: var(--text-light);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-glow);
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* WebGL Background Container */
+.webgl-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: auto; /* WebGL can intercept clicks/hovers */
+}
+
+/* Scrollable UI Content Wrapper */
+.ui-wrapper {
+  position: relative;
+  z-index: 2;
+  pointer-events: none; /* Let clicks pass through to canvas if not explicitly interactive */
+}
+
+.ui-interactive {
+  pointer-events: auto; /* Make headers, buttons, cards interactive */
+}
+
+/* Layout Sections */
+section {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 10%;
+  position: relative;
+}
+
+/* Text Styles */
+.title-gradient {
+  background: linear-gradient(135deg, #fff 30%, var(--primary) 70%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.green-gradient {
+  background: linear-gradient(135deg, #fff 30%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow-text {
+  text-shadow: 0 0 20px var(--primary-glow);
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--blur-amt));
+  -webkit-backdrop-filter: blur(var(--blur-amt));
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  box-shadow: var(--shadow-glass);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel:hover {
+  border-color: var(--border-glass-glow);
+  box-shadow: 0 8px 32px 0 rgba(0, 210, 255, 0.15);
+}
+
+/* Custom Glassmorphic Cards for HTML projection inside ThreeJS */
+.hologram-card {
+  width: 280px;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: rgba(8, 8, 20, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+  user-select: none;
+  font-family: var(--font-sans);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.hologram-card.income {
+  border-left: 3px solid var(--secondary);
+}
+
+.hologram-card.expenses {
+  border-left: 3px solid var(--danger);
+}
+
+.hologram-card.savings {
+  border-left: 3px solid var(--primary);
+}
+
+.hologram-card.investments {
+  border-left: 3px solid var(--accent);
+}
+
+/* Interactive Components */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 2rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: var(--bg-deep);
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 210, 255, 0.5), 0 0 10px rgba(189, 0, 255, 0.5);
+  color: white;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-light);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+}
+
+/* Navbar */
+.nav-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 10%;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+}
+
+.logo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-gray);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: var(--primary);
+}
+
+/* Hero Section */
+.hero-content {
+  text-align: center;
+  max-width: 800px;
+  z-index: 5;
+}
+
+.hero-content h1 {
+  font-family: var(--font-display);
+  font-size: 4.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 3rem;
+  }
+}
+
+.hero-content p {
+  font-size: 1.25rem;
+  color: var(--text-gray);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+/* Decorative Blur Elements */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(150px);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.glow-orb-purple {
+  background: var(--accent);
+  width: 400px;
+  height: 400px;
+  top: 10%;
+  right: 15%;
+}
+
+.glow-orb-blue {
+  background: var(--primary);
+  width: 450px;
+  height: 450px;
+  bottom: 10%;
+  left: 10%;
+}
+
+/* Lenis Smooth Scroll CSS */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
