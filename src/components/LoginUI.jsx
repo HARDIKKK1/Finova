@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Unlock, Mail, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsSuccess, onBackToLanding }) => {
+  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const cardRef = useRef();
@@ -43,21 +49,64 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
     setTilt({ x: 0, y: 0 });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please fill in all security credentials.');
+      return;
+    }
+
+    if (isRegister && password !== confirmPassword) {
+      setError('Security keys do not match.');
       return;
     }
     
     setError('');
     setIsSubmitting(true);
     
-    // Simulate high-security credentials validation loader
-    setTimeout(() => {
+    try {
+      if (isRegister) {
+        // Firebase Create User
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        // Firebase Sign In
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      
+      // Success triggers combination lock spin and camera dolly
       setIsSubmitting(false);
       setIsSuccess(true);
-    }, 1800);
+    } catch (err) {
+      setIsSubmitting(false);
+      // Map Firebase error codes to readable messages
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          setError('This node email is already registered.');
+          break;
+        case 'auth/weak-password':
+          setError('Security key is too weak (minimum 6 characters).');
+          break;
+        case 'auth/invalid-credential':
+          setError('Invalid node credentials or security key.');
+          break;
+        case 'auth/user-not-found':
+          setError('No account associated with this email.');
+          break;
+        case 'auth/invalid-email':
+          setError('Please provide a valid email format.');
+          break;
+        default:
+          setError(err.message.replace('Firebase:', '').trim());
+      }
+    }
+  };
+
+  const toggleView = () => {
+    setIsRegister(!isRegister);
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setError('');
   };
 
   return (
@@ -116,10 +165,18 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
         {/* Heading */}
         <div className="text-center mb-8">
           <h2 className="text-white text-3xl font-extrabold tracking-tight mb-2 font-display">
-            {isSubmitting ? 'Verifying Node...' : isSuccess ? 'Decrypting Vault...' : 'Welcome Back'}
+            {isSuccess 
+              ? 'Decrypting...' 
+              : isSubmitting 
+              ? (isRegister ? 'Creating Node...' : 'Verifying Node...') 
+              : (isRegister ? 'Establish Node' : 'Welcome Back')}
           </h2>
           <p className="text-gray-400 text-sm">
-            {isSuccess ? 'Access granted. Welcome to Finova.' : 'Access your personal financial command center.'}
+            {isSuccess 
+              ? 'Access granted. Welcome to Finova.' 
+              : isRegister 
+              ? 'Deploy a new credentials pair into the ledger.' 
+              : 'Access your personal financial command center.'}
           </p>
         </div>
 
@@ -138,7 +195,7 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
           )}
         </AnimatePresence>
 
-        {/* Login Form */}
+        {/* Login/Register Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Email input */}
           <div className="flex flex-col gap-1.5">
@@ -183,16 +240,53 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
             </div>
           </div>
 
-          {/* Forgot Password link */}
-          <div className="text-right">
-            <button
-              type="button"
-              className="text-xs text-gray-500 hover:text-[#00e5ff] transition-all duration-300 cursor-pointer relative group"
-            >
-              Forgot Credentials?
-              <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#00e5ff] transition-all duration-300 group-hover:w-full" />
-            </button>
-          </div>
+          {/* Confirm Password input (only shown during registration) */}
+          <AnimatePresence>
+            {isRegister && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-1.5 overflow-hidden"
+              >
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Confirm Security Key</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-xs text-gray-500 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    disabled={isSubmitting || isSuccess}
+                    onChange={handleInputChange(setConfirmPassword)}
+                    placeholder="••••••••••••"
+                    className="w-full bg-black/60 border border-white/8 hover:border-white/15 focus:border-[#00e5ff] text-white rounded-xl pl-11 pr-4 py-3 text-sm transition-all duration-300 outline-none focus:scale-[1.01] focus:shadow-[0_0_15px_rgba(0,229,255,0.15)] disabled:opacity-50"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Forgot Password link (only shown in Login view) */}
+          {!isRegister && (
+            <div className="text-right">
+              <button
+                type="button"
+                className="text-xs text-gray-500 hover:text-[#00e5ff] transition-all duration-300 cursor-pointer relative group"
+              >
+                Forgot Credentials?
+                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#00e5ff] transition-all duration-300 group-hover:w-full" />
+              </button>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
@@ -213,25 +307,26 @@ const LoginUI = ({ setIsTyping, isSubmitting, setIsSubmitting, isSuccess, setIsS
             ) : isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-[#00e5ff] border-t-transparent rounded-full animate-spin" />
-                Authorizing Node
+                {isRegister ? 'Establishing Node' : 'Authorizing Node'}
               </>
             ) : (
               <>
-                Enter Dashboard <ArrowRight size={16} />
+                {isRegister ? 'Establish Node' : 'Enter Dashboard'} <ArrowRight size={16} />
               </>
             )}
           </button>
         </form>
 
-        {/* Secondary sign up options */}
+        {/* Secondary sign up / sign in toggle link */}
         <div className="mt-8 text-center border-t border-white/5 pt-6">
           <p className="text-xs text-gray-500">
-            Node unregistered?{' '}
+            {isRegister ? 'Already registered? ' : 'Node unregistered? '}
             <button
               type="button"
+              onClick={toggleView}
               className="text-[#00e5ff] font-bold hover:text-white transition-colors cursor-pointer relative group"
             >
-              Establish Account
+              {isRegister ? 'Sign In' : 'Establish Account'}
               <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full" />
             </button>
           </p>
