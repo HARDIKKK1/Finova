@@ -12,7 +12,9 @@ const TransactionsUI = ({
   selectedCategory, setSelectedCategory,
   selectedTransaction, setSelectedTransaction,
   onExportTrigger, isExporting,
-  onBackToDashboard
+  onBackToDashboard,
+  onNavigateAddTransaction,
+  onNavigateEditTransaction
 }) => {
   
   const stats = [
@@ -164,14 +166,14 @@ const TransactionsUI = ({
         <div className="flex justify-center ui-interactive">
           <div className="flex items-center gap-4 bg-black/70 border border-white/8 px-6 py-3 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-md">
             <button 
-              onClick={() => alert("Action: Create New Transaction")}
+              onClick={onNavigateAddTransaction}
               className="text-xs font-bold text-white hover:text-[#00ffb2] transition-colors flex items-center gap-1.5 uppercase cursor-pointer"
             >
               <Plus size={14} className="text-[#00ffb2]" /> Add Log
             </button>
             <div className="w-[1px] h-4 bg-white/10" />
             <button 
-              onClick={() => alert("Action: Edit Selected Transaction")}
+              onClick={onNavigateEditTransaction}
               className="text-xs font-bold text-white hover:text-[#00e5ff] transition-colors flex items-center gap-1.5 uppercase cursor-pointer"
             >
               <Edit3 size={14} className="text-[#00e5ff]" /> Edit

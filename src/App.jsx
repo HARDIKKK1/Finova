@@ -10,13 +10,15 @@ import DashboardCanvas from './components/DashboardCanvas';
 import DashboardUI from './components/DashboardUI';
 import TransactionsCanvas from './components/TransactionsCanvas';
 import TransactionsUI from './components/TransactionsUI';
+import AddTransactionCanvas from './components/AddTransactionCanvas';
+import AddTransactionUI from './components/AddTransactionUI';
 import { auth } from './firebase';
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
 function App() {
-  // View states: 'landing' | 'login' | 'dashboard' | 'transactions'
+  // View states: 'landing' | 'login' | 'dashboard' | 'transactions' | 'add-transaction'
   const [currentView, setCurrentView] = useState('landing');
   const scrollProgressRef = useRef(0);
 
@@ -32,12 +34,25 @@ function App() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
 
+  // States for the 3D Add/Edit Transaction Page
+  const [txTitle, setTxTitle] = useState('');
+  const [txAmount, setTxAmount] = useState('');
+  const [txType, setTxType] = useState('expense');
+  const [txCategory, setTxCategory] = useState('');
+  const [txDate, setTxDate] = useState('');
+  const [txNotes, setTxNotes] = useState('');
+  
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   // Check auth state on load
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        // If logged in, send them to dashboard unless they specifically want to go to transactions
-        setCurrentView((prev) => (prev === 'transactions' ? 'transactions' : 'dashboard'));
+        // Safe redirect to active view
+        setCurrentView((prev) => 
+          prev === 'transactions' || prev === 'add-transaction' ? prev : 'dashboard'
+        );
       } else {
         setCurrentView('landing');
       }
@@ -47,7 +62,7 @@ function App() {
 
   useEffect(() => {
     // Scroll handling is only needed on 'landing', 'dashboard', and 'transactions' views
-    if (currentView === 'login') return;
+    if (currentView === 'login' || currentView === 'add-transaction') return;
 
     // 1. Initialize Lenis Smooth Scrolling
     const lenis = new Lenis({
@@ -72,7 +87,6 @@ function App() {
     gsap.ticker.lagSmoothing(0);
 
     // 2. Set up GSAP ScrollTrigger to track scroll progress
-    // Landing has 6 sections (0-5), Dashboard has 5 (0-4), Transactions has 2 (0-1)
     const sectionsCount = currentView === 'landing' ? 5 : currentView === 'dashboard' ? 4 : 1;
     
     const trigger = ScrollTrigger.create({
@@ -81,7 +95,6 @@ function App() {
       end: 'bottom bottom',
       scrub: true,
       onUpdate: (self) => {
-        // Map scroll percentage to view sections range
         scrollProgressRef.current = self.progress * sectionsCount;
       }
     });
@@ -125,6 +138,55 @@ function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Navigate to Add Transaction
+  const handleNavigateAddTransaction = () => {
+    setIsEditMode(false);
+    setTxTitle('');
+    setTxAmount('');
+    setTxType('expense');
+    setTxCategory('');
+    setTxDate(new Date().toISOString().split('T')[0]);
+    setTxNotes('');
+    setCurrentView('add-transaction');
+  };
+
+  // Navigate to Edit Transaction
+  const handleNavigateEditTransaction = () => {
+    if (!selectedTransaction) {
+      alert("Please select a transaction node in the timeline list first!");
+      return;
+    }
+    setIsEditMode(true);
+    setTxTitle(selectedTransaction.title);
+    // Parse numeric value from string
+    const rawAmt = selectedTransaction.amount.replace(/[^0-9]/g, '');
+    setTxAmount(rawAmt);
+    setTxType(selectedTransaction.type);
+    setTxCategory(selectedTransaction.category);
+    
+    // Map human readable dates
+    const dateMapping = {
+      'May 25': '2026-05-25',
+      'May 26': '2026-05-26',
+      'May 27': '2026-05-27',
+      'May 28': '2026-05-28',
+      'May 29': '2026-05-29'
+    };
+    setTxDate(dateMapping[selectedTransaction.date] || new Date().toISOString().split('T')[0]);
+    setTxNotes(selectedTransaction.notes);
+    setCurrentView('add-transaction');
+  };
+
+  const handleSaveTransaction = () => {
+    setIsSaving(true);
+  };
+
+  const handleSaveAnimComplete = () => {
+    setIsSaving(false);
+    setSelectedTransaction(null);
+    setCurrentView('transactions');
   };
 
   return (
@@ -172,7 +234,7 @@ function App() {
             onNavigateTransactions={() => setCurrentView('transactions')}
           />
         </>
-      ) : (
+      ) : currentView === 'transactions' ? (
         <>
           {/* Transactions Page WebGL Layer */}
           <TransactionsCanvas
@@ -198,6 +260,39 @@ function App() {
             onExportTrigger={handleExportTrigger}
             isExporting={isExporting}
             onBackToDashboard={() => setCurrentView('dashboard')}
+            onNavigateAddTransaction={handleNavigateAddTransaction}
+            onNavigateEditTransaction={handleNavigateEditTransaction}
+          />
+        </>
+      ) : (
+        <>
+          {/* Add/Edit Transaction Page WebGL Layer */}
+          <AddTransactionCanvas
+            amount={txAmount}
+            type={txType}
+            category={txCategory}
+            isSaving={isSaving}
+            onSaveComplete={handleSaveAnimComplete}
+          />
+
+          {/* HTML Add/Edit Transaction UI Overlay */}
+          <AddTransactionUI
+            title={txTitle}
+            setTitle={setTxTitle}
+            amount={txAmount}
+            setAmount={setTxAmount}
+            type={txType}
+            setType={setTxType}
+            category={txCategory}
+            setCategory={setTxCategory}
+            date={txDate}
+            setDate={setTxDate}
+            notes={txNotes}
+            setNotes={setTxNotes}
+            isEditMode={isEditMode}
+            isSaving={isSaving}
+            onSave={handleSaveTransaction}
+            onCancel={() => setCurrentView('transactions')}
           />
         </>
       )}
